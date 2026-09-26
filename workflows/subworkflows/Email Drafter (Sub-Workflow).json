@@ -1,0 +1,113 @@
+{
+  "name": "Email Drafter (Sub-Workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "date_range"
+            },
+            {
+              "name": "number_of_emails",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "2e803421-f10d-4d93-b93f-9cb9f2e7338a",
+      "name": "Email Tool"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $json.number_of_emails }}",
+        "filters": {
+          "receivedAfter": "={{ $json.date_range }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        -16
+      ],
+      "id": "487fa46f-ef22-4492-8a04-f5ac1ade6e46",
+      "name": "Get many messages",
+      "webhookId": "0ee44b0f-2e26-4ce7-a4a7-dfaea5ca423d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FoJ48IFIPdga69ti",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "From"
+            },
+            {
+              "fieldToAggregate": "snippet"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -16
+      ],
+      "id": "62c89425-1c19-4f42-8018-dc85836a858e",
+      "name": "Aggregate"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Email Tool": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2c18efb2-95b7-434f-8856-009963027b91",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "aVrThK2ie00Zch2r",
+  "tags": []
+}

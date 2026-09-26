@@ -1,0 +1,245 @@
+{
+  "name": "Create Event (Sub-Workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "startTime"
+            },
+            {
+              "name": "endTime"
+            },
+            {
+              "name": "Summary"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        -256
+      ],
+      "id": "8ef0b6cf-f1f4-40b5-9bfc-d3d280d7a4a9",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\nconst DEFAULT_OFFSET = '+08:00'; // Manila\n\nfunction validateAndFormat(rawDate) {\n  if (typeof rawDate !== 'string' || !rawDate.trim()) return null;\n\n  let cleanedDate = rawDate.trim();\n\n  // A timezone-aware ISO date is required or defaults to Manila time.\n  if (!cleanedDate.endsWith('Z') && !/[+-]\\d{2}:?\\d{2}$/.test(cleanedDate)) {\n    cleanedDate += DEFAULT_OFFSET;\n  }\n\n  const parsed = new Date(cleanedDate);\n  if (Number.isNaN(parsed.getTime())) return null;\n\n  return parsed.toISOString();\n}\n\nconst startTime = validateAndFormat(inputData.startTime);\nconst endTime = validateAndFormat(inputData.endTime);\nconst summary = inputData.summary || inputData.Summary || inputData.title || 'New Event';\n\nif (!startTime || !endTime) {\n  return {\n    json: {\n      success: false,\n      error: 'Provide valid ISO dates, e.g. 2026-09-23T09:00:00+08:00.',\n    },\n  };\n}\n\nif (new Date(startTime) >= new Date(endTime)) {\n  return {\n    json: {\n      success: false,\n      error: 'endTime must be after startTime.',\n    },\n  };\n}\n\nreturn {\n  json: {\n    ...inputData,\n    success: true,\n    Summary: summary,\n    startTime,\n    endTime,\n  },\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -256
+      ],
+      "id": "0be8608a-c8c7-4520-959f-d19312a8f5f7",
+      "name": "Validation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa35642e-d790-432c-b5cc-4ee0547c83d0",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2cbde94f-1f1e-4da2-ad47-a222b67577dc",
+              "leftValue": "={{ $json.false }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "ddac7d61-1a3e-41a6-b1ab-d5934a442314",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "primary",
+          "cachedResultName": "primary"
+        },
+        "start": "={{ $json.startTime }}",
+        "end": "={{ $json.endTime }}",
+        "additionalFields": {
+          "summary": "={{ $json.Summary }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        -448
+      ],
+      "id": "8f10adff-37e4-4ff5-8d20-36b18e41f2a5",
+      "name": "Create an event",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VRcV1FrqMX9DfKIM",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  json: {\n    success: false,\n    message: $json.error || \"Event creation failed validation.\"\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        -224
+      ],
+      "id": "8f7088fd-9696-4c86-9a49-f250c825ddeb",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fba3c610-9ca9-482d-ac3b-bebf54501c13",
+              "name": "success",
+              "value": "={{ $('If').item.json.success }}",
+              "type": "boolean"
+            },
+            {
+              "id": "b0831ccc-77cb-4904-b03c-235c2d10be40",
+              "name": "summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "3163e570-9af7-4bfd-852f-b198d2eaf397",
+              "name": "start",
+              "value": "={{ $json.start }}",
+              "type": "object"
+            },
+            {
+              "id": "42da750f-b949-4064-bd38-c36a4a0f383a",
+              "name": "end",
+              "value": "={{ $json.end }}",
+              "type": "object"
+            },
+            {
+              "id": "30630362-034b-4bef-9c37-48c7889908ad",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1008,
+        -448
+      ],
+      "id": "43492c4a-8ad7-4c70-aa02-5d51d8bd21f9",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f654388c-3cf9-4468-a64f-5747944ae65d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "UlingKY1dxvhdthk",
+  "tags": []
+}

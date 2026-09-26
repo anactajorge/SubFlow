@@ -1,0 +1,504 @@
+{
+  "name": "Personal Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -176,
+        0
+      ],
+      "id": "e787ab4e-91cb-47b5-88e5-033cc0d1145c",
+      "name": "Telegram Trigger",
+      "webhookId": "aa8bffab-30fd-4f94-b7e7-191d4865371b",
+      "credentials": {
+        "telegramApi": {
+          "id": "uxhYj5WmLf71QRD6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        240
+      ],
+      "id": "2e1e1a80-0b4b-403b-aabc-84ac998dc645",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "ZSsz2XCb1K9ExRcd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -112,
+        240
+      ],
+      "id": "69f62646-0509-4c4b-a399-81f4ffe6adf4",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a helpful, efficient personal assistant.\n\nCore Directives:\n- Keep responses brief, direct, and focused without omitting necessary details.\n- If you do not know an answer or lack the information to answer accurately, explicitly say so.\n- When an available tool can gather missing facts, verify real-time data, or complete an action, call that tool before responding. Do not guess information that a tool can provide.\n- Never mention internal tool names, APIs, or system mechanics in your final replies to the user.\n- If a tool fails, returns insufficient data, or is not applicable, admit the limitation candidly.\n-You are based in the philippines (asia region).\n-Dont table responses\n-When you call the 'Create Event' tool and receive a success confirmation, do NOT call the tool again. Immediately reply to the user confirming the event details.\n\nCurrent reference time: {{ $now.setZone('Asia/Manila').format('yyyy-MM-dd HH:mm:ss ZZ') }}."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "f437ab51-d757-4dbb-8ac7-b994cdc63d02",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "description": "Fetches emails from Gmail received after a specified date.",
+        "workflowId": {
+          "__rl": true,
+          "value": "aVrThK2ie00Zch2r",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/aVrThK2ie00Zch2r",
+          "cachedResultName": "Email Drafter (Sub-Workflow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date_range": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('date_range', `The start date to filter emails after, formatted as YYYY-MM-DD (e.g., 2026-09-19). Calculate relative terms like 'yesterday' or 'last week' based on today's date.`, 'string') }}",
+            "number_of_emails": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('number_of_emails', `The maximum number of emails to retrieve (default to 5 if not specified`, 'number') }}"
+          },
+          "matchingColumns": [
+            "data_range"
+          ],
+          "schema": [
+            {
+              "id": "date_range",
+              "displayName": "date_range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "number_of_emails",
+              "displayName": "number_of_emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        320
+      ],
+      "id": "32ba45b1-76e0-44ba-988f-932337688ca7",
+      "name": "Get Email"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "=n8n: {{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        352,
+        0
+      ],
+      "id": "129f72fc-a68d-47ee-bc9f-b8b6fbbc3568",
+      "name": "Send a text message",
+      "webhookId": "320fab8b-d5a5-4ec8-80ef-d4f49dba685a",
+      "credentials": {
+        "telegramApi": {
+          "id": "uxhYj5WmLf71QRD6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to look up existing calendar events, appointments, meetings, or the user's schedule for a specific day or date range.",
+        "workflowId": {
+          "__rl": true,
+          "value": "89RIvECV3ps6fFxH",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/89RIvECV3ps6fFxH",
+          "cachedResultName": "Get Calendar (Sub-Workflow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "startTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('startTime', `Start of the time window in ISO 8601 format. If checking an entire day, use 00:00:00+08:00.`, 'string') }}",
+            "endTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('endTime', `End of the time window in ISO 8601 format. If checking an entire day, use 23:59:59+08:00.`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "startTime",
+              "displayName": "startTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "endTime",
+              "displayName": "endTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        320
+      ],
+      "id": "098fc3a9-00c4-4a7d-a45e-e6f9f253ab2e",
+      "name": "Get Calendar"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "uAbHIQW2r6668IGG",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/uAbHIQW2r6668IGG",
+          "cachedResultName": "Send Email (Sub-Workflow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "To:": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To_', `The recipient's email address (e.g., example@domain.com)`, 'string') }}",
+            "Topic:": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Topic_', `The subject line or content/topic of the email message to be sent`, 'string') }}",
+            "Sender": "={{ $('Telegram Trigger').item.json.message.from.first_name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "To:",
+              "displayName": "To:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "Topic:",
+              "displayName": "Topic:",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "Sender",
+              "displayName": "Sender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        320
+      ],
+      "id": "53c3580a-12cf-49d7-a53f-3fa1d4c89ec8",
+      "name": "Send Email"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "UlingKY1dxvhdthk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/UlingKY1dxvhdthk",
+          "cachedResultName": "Create Event (Sub-Workflow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "startTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('startTime', `The start date and time of the event formatted as an ISO 8601 string (e.g., YYYY-MM-DDTHH:mm:ss).`, 'string') }}",
+            "endTime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('endTime', `The end date and time of the event formatted as an ISO 8601 string (e.g., YYYY-MM-DDTHH:mm:ss).`, 'string') }}",
+            "Summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', `The task at hand.`, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "startTime",
+              "displayName": "startTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "endTime",
+              "displayName": "endTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        320
+      ],
+      "id": "b2a84cfc-98e2-4fee-ad40-20a36ce7f845",
+      "name": "Create Event"
+    },
+    {
+      "parameters": {
+        "content": "Wishlist:\n-Postgress Chat Memory Saver or a SQlite Chat Memory Saver",
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -256,
+        384
+      ],
+      "typeVersion": 1,
+      "id": "48a0ff29-99e2-434c-be26-1c86ae3ce2a8",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "nK2usRSNqyFQIehl",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/nK2usRSNqyFQIehl",
+          "cachedResultName": "Websearch (Sub-workflow)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Google Search": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Google_Search', `Searches Google for real-time information, recent events, breaking news, factual data, and external web content to ground answers in up-to-date and accurate context.`, 'string') }}"
+          },
+          "matchingColumns": [
+            "Google Search"
+          ],
+          "schema": [
+            {
+              "id": "Google Search",
+              "displayName": "Google Search",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        464
+      ],
+      "id": "4ffbd0e4-621e-45eb-81f1-0113256bbd6b",
+      "name": "Websearch"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Websearch": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b4b01f56-7692-4471-bb78-cf96977503ea",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "zgGQUUMgNXnSwJs6",
+  "tags": []
+}

@@ -1,0 +1,199 @@
+{
+  "name": "Get Calendar (Sub-Workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "startTime"
+            },
+            {
+              "name": "endTime"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        -256
+      ],
+      "id": "31ec06ee-b4ac-47f6-8159-8f856ec92359",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\n\nfunction validateAndFormat(rawDate) {\n  if (!rawDate || typeof rawDate !== 'string') return null;\n\n  // If the model didn't include a timezone offset (Z or +XX:XX), default to +08:00 (Manila)\n  let cleanedDate = rawDate.trim();\n  if (!cleanedDate.endsWith('Z') && !/[+-]\\d{2}:?\\d{2}$/.test(cleanedDate)) {\n    cleanedDate += '+08:00';\n  }\n\n  const parsed = new Date(cleanedDate);\n  if (isNaN(parsed.getTime())) return null;\n\n  return parsed.toISOString();\n}\n\nconst startISO = validateAndFormat(inputData.startTime);\nconst endISO = validateAndFormat(inputData.endTime);\n\nif (!startISO || !endISO) {\n  return {\n    json: {\n      success: false,\n      error: `Invalid date format received. Received startTime: \"${inputData.startTime}\", endTime: \"${inputData.endTime}\".`\n    }\n  };\n}\n\nif (new Date(startISO) >= new Date(endISO)) {\n  return {\n    json: {\n      success: false,\n      error: \"Logical error: endTime must be after startTime.\"\n    }\n  };\n}\n\nreturn {\n  json: {\n    success: true,\n    startTime: startISO,\n    endTime: endISO\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -256
+      ],
+      "id": "18cba18a-49d4-4881-8129-bffa918a853b",
+      "name": "Validation"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aa35642e-d790-432c-b5cc-4ee0547c83d0",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "e3f8406b-7edb-4a8e-bcfe-59790e35f889",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "primary",
+          "cachedResultName": "primary"
+        },
+        "limit": 5,
+        "timeMin": "={{ $json.startTime }}",
+        "timeMax": "={{ $json.endTime }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        -448
+      ],
+      "id": "90c8da3d-097b-4d70-8687-90714a21aa52",
+      "name": "Get many events",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "VRcV1FrqMX9DfKIM",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Check if the output was empty (handled by Always Output Data)\nconst hasEvents = items.length > 0 && items[0].json.id !== undefined;\n\nif (!hasEvents) {\n  return {\n    json: {\n      isAvailable: true,\n      message: \"The time slot is free. No conflicting events found.\",\n      events: []\n    }\n  };\n}\n\nconst events = items.map(item => ({\n  summary: item.json.summary || \"Busy (No title)\",\n  description: item.json.description || \"No description provided\",\n  start: item.json.start?.dateTime || item.json.start?.date,\n  end: item.json.end?.dateTime || item.json.end?.date\n}));\n\nreturn {\n  json: {\n    isAvailable: false,\n    message: `Busy. Found ${events.length} conflicting event(s).`,\n    events: events\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        -448
+      ],
+      "id": "c57d58ba-5c3c-4014-bafc-a9b5cee5a885",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"isAvailable\": false,\n  \"error\": \"Invalide Input\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        720,
+        -160
+      ],
+      "id": "e9aed59b-5f97-40f8-be44-69ab7c15361a",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a28842e1-372e-4d59-a83f-5c666d60dcbd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "89RIvECV3ps6fFxH",
+  "tags": []
+}

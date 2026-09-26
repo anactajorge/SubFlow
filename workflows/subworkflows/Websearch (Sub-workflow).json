@@ -1,0 +1,100 @@
+{
+  "name": "Websearch (Sub-workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Google Search"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f83e0a16-25d1-43be-9b51-db5733c337d3",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "query": "={{ $json[\"Google Search\"] }}",
+        "options": {
+          "search_depth": "basic",
+          "max_results": 3,
+          "include_answer": "basic",
+          "include_images": false
+        }
+      },
+      "type": "@tavily/n8n-nodes-tavily.tavily",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c21d50f0-64dd-4649-9a3c-359b7735f303",
+      "name": "Search",
+      "credentials": {
+        "tavilyApi": {
+          "id": "7mLzwXlS0hrh0Z7J",
+          "name": "Tavily account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      answer: $input.first().json.answer\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7a77f916-e0ed-47df-954d-b4a3c14794d2",
+      "name": "Get answer only"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search": {
+      "main": [
+        [
+          {
+            "node": "Get answer only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "29cf6c45-ecc0-47bc-bfe8-88751bf69e1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "nK2usRSNqyFQIehl",
+  "tags": []
+}

@@ -1,0 +1,166 @@
+{
+  "name": "Send Email (Sub-Workflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "To:"
+            },
+            {
+              "name": "Topic:"
+            },
+            {
+              "name": "Sender"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a4d20f01-8f11-464d-b16f-a589b9c62e3f",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Recipient Email: {{ $json[\"To:\"] }}\nTopic: {{ $json[\"Topic:\"] }}\nSender: {{ $json.Sender }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a personal email assistant drafting messages on my behalf. Your goal is to write natural, conversational, and authentic emails that sound like a real person, not an AI or a stiff corporate memo.\n\nGuidelines:\n- Tone: Casual, direct, friendly, and down-to-earth.\n- Style: Use everyday conversational language and natural contractions (e.g., \"I'm\", \"can't\", \"let's\"). Avoid corporate jargon and robotic tropes (never use phrases like \"I hope this email finds you well\" or \"I am writing to kindly request\").\n- Salutations: Open casually with \"Hey,\" or \"Hi [Name],\" if a name is known. If no name is provided, use \"Hey,\" or \"Hi there,\". NEVER use bracketed placeholders like \"[Recipient Name]\".\n- Sign-offs: Sign off casually with \"Best,\" or \"Thanks,\" followed by my name (Your Name). NEVER use bracketed placeholders like \"[Your Name]\".\n- Structure: Keep paragraphs short (1–2 sentences) and get straight to the point.\n\nExamples of how I write:\nExample 1 (Request):\n\"Hey Alex, \nQuick question—do you have time to look over that draft this afternoon? Let me know if you need anything else from me.\nThanks,\n[Your, Name]\"\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "010e6d35-e8f1-44c9-baf0-ff24f58cdc88",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        240
+      ],
+      "id": "2d1f21cc-ccd6-4871-8f53-cab514ba15fd",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "ZSsz2XCb1K9ExRcd",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('When Executed by Another Workflow').item.json[\"To:\"] }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "62a56e74-3bc4-4031-a821-0ce83ff6304e",
+      "name": "Send a message",
+      "webhookId": "04691d1b-d480-4d06-be08-0d02257ec6fc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FoJ48IFIPdga69ti",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"Subject line of the email\",\n  \"body\": \"Body content of the email\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        240
+      ],
+      "id": "54bbf798-9fff-4a79-a98c-ea6dbc87249e",
+      "name": "Structured Output Parser"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "65383b37-3388-46f4-9350-167bfd5ffb60",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b7df7bb6ed249fedd5ae4be85b14460c2e8c9f75fe7d35be12ff00590fd03f9b"
+  },
+  "nodeGroups": [],
+  "id": "uAbHIQW2r6668IGG",
+  "tags": []
+}
