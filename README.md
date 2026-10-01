@@ -71,7 +71,11 @@ Open the **AI Agent** node in the main workflow and edit the **System Message**:
 - [ ] **Voice Transcription**: Implement voice note handling via Telegram by piping audio files to a Whisper / local STT endpoint.
 - [ ] **Free RAG Pipeline**: Connect a vector store (Chroma or Pinecone free tier) using Hugging Face serverless inference embeddings for contextual document retrieval.
 
-
+## Todo/Changes
+- **October 1, 2026**
+- **Switched** to GROQ to Gemini 3.5 Flash-lite for TPM and RPM
+- **Create a node to delete a calendar event**
+- **add a budget tracker**
 ## Graph
 
 ![alt text](main-workflow.png)
