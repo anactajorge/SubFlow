@@ -75,7 +75,7 @@ Open the **AI Agent** node in the main workflow and edit the **System Message**:
 - **October 1, 2026**
 - **Switched** to GROQ to Gemini 3.5 Flash-lite for TPM and RPM
 - **Create a node to delete a calendar event**
-- **add a budget tracker**
+- **add a budget tracker**: that can add and track personal finance via google sheets idea, current idea: creating two nodes get sheets and add to sheets and down the line will add an aggregation function to sum up months of expenses.
 ## Graph
 
 ![alt text](main-workflow.png)
